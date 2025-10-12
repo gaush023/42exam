@@ -20,10 +20,10 @@ std::ostream& operator<<(std::ostream& os, const bigint& x){
 }
 
 bool bigint::operator==(const bigint& rhs) const { return a == rhs.a; }
-bool bigint::operator!=(const bigint& rhs) const { return !(*this == rhs.a);}
+bool bigint::operator!=(const bigint& rhs) const { return !(*this == rhs);}
 bool bigint::operator<(const bigint& rhs) const {
     if(a.size() != rhs.a.size()) { return a.size() < rhs.a.size(); }
-    for(int i = (int)a.size() - 1; i > 0; --i)
+    for(int i = (int)a.size() - 1; i >= 0; --i)
         if(a[i] != rhs.a[i]) return a[i] < rhs.a[i];
     return false;
 }
@@ -34,8 +34,9 @@ bool bigint::operator>=(const bigint& rhs) const { return (*this > rhs) || (*thi
 bigint& bigint::operator+=(const bigint &rhs){
     size_t l = (a.size() >rhs.a.size() ? a.size() : rhs.a.size());
     a.resize(l, 0);
+    int carry = 0;
     for(size_t i = 0; i < l; i++){
-        int sum = a[i] + (i < rhs.a.size() ? rhs.a.size[i] : 0) + carry;
+        int sum = a[i] + (i < rhs.a.size() ? rhs.a[i] : 0) + carry;
         if( sum >= 10){
             a[i] = digit_t(sum - 10);
             carry = 1;
@@ -49,7 +50,7 @@ bigint& bigint::operator+=(const bigint &rhs){
     return *this;
 }
 
-bigint bigint::operator+(const bigint& rhs){
+bigint bigint::operator+(const bigint& rhs) const{
     bigint tmp = *this;
     tmp += rhs;
     return tmp;
@@ -116,14 +117,14 @@ void bigint::from_unit(unsigned int v)
 void bigint::from_string(const std::string &s){
     a.clear();
     size_t i = 0;
-    while( a < s.size() && s[i] == '0') ++i;
-    if(a == s.size()){
+    while( i < s.size() && s[i] == '0') ++i;
+    if(i == s.size()){
         a.clear();
         a.push_back(0);
         return;
     }
     for(size_t p = s.size(); p > i; --p){
-        char c = s[p -1]
+        char c = s[p -1];
         if(!std::isdigit((unsigned char)c)){
             a.clear();
             a.push_back(0);

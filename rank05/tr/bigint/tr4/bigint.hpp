@@ -7,7 +7,7 @@
 #include <climits>
 
 class bigint{
-typedef unsigned char digit_t;
+typedef int digit_t;
 public:
     bigint();
     bigint(unsigned int v);
@@ -24,7 +24,7 @@ public:
     bool operator<=(const bigint& rhs) const;
 
     bigint& operator+=(const bigint& rhs);
-    bigint operator+(const bigint& rhs);
+    bigint operator+(const bigint& rhs) const;
     bigint& operator++();
     bigint operator++(int);
     
