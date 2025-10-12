@@ -40,7 +40,7 @@ class vect2{
         ~vect2();
 };
 
-vect2 operator*(int num, const vect2& obj)
+vect2 operator*(int num, const vect2& obj);
 
 std::ostream& operator<<(std::ostream& os, const vect2& obj);
 
