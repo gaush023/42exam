@@ -78,7 +78,7 @@ bigint bigint::operator++(int) {
 bigint bigint::operator<<(unsigned int n) const {
 	if (is_zero()) return *this;
 	bigint out;
-  out.a = a;
+    out.a = a;
 	out.a.insert(out.a.begin(), n, 0);
 	return out;
 }
