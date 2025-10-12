@@ -12,18 +12,17 @@ class bigint{
 		bigint(const std::string &s);
 		bigint(const bigint& others);
 
-		std::string toString() const;
+		std::string tostring() const;
 
 		bool operator==(const bigint& rhs) const;
 		bool operator!=(const bigint& rhs) const;
 		bool operator<(const bigint& rhs) const;
-		bool operator<(const bigint& rhs) const;
+		bool operator>(const bigint& rhs) const;
 		bool operator>=(const bigint& rhs) const;
-		bool operator>=(const bigint& rhs) const;
+		bool operator<=(const bigint& rhs) const;
 
 		bigint& operator+=(const bigint& rhs);
 		bigint operator+(const bigint& rhs) const;
-
 		bigint& operator++();
 		bigint operator++(int);
 
@@ -39,10 +38,12 @@ class bigint{
 
 	private:
 		std::vector<digit_t> a;
-		bool is_zero();
+		bool is_zero() const;
 		void normalize();
 		void from_unit(unsigned int v);
-		void from_string(const std::string &s)
-		static unsigned int to_uint_saturating(const bigint& n);
+		void from_string(const std::string &s);
+		static unsigned int to_uint_satruating(const bigint& n);
 };
+
+std::ostream& operator<<(std::ostream& os, const bigint& x);
 
