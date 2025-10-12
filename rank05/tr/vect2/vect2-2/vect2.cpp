@@ -86,7 +86,7 @@ vect2&  vect2::operator*=(const vect2& obj)
     return *this;
 }
 
-vect2& vect2::operator+(const vect2& obj) const
+vect2 vect2::operator+(const vect2& obj) const
 {
     vect2 tmp = *this;
     
@@ -96,7 +96,7 @@ vect2& vect2::operator+(const vect2& obj) const
     return tmp;
 }
 
-vect2& vect2::operator-(const vect2& obj) const
+vect2 vect2::operator-(const vect2& obj) const
 {
     vect2 tmp = *this;
     
@@ -106,7 +106,7 @@ vect2& vect2::operator-(const vect2& obj) const
     return tmp;
 }
 
-vect2& vect2::operator*(const vect2& obj) const`
+vect2 vect2::operator*(const vect2& obj) const
 {
     vect2 tmp = *this;
     
@@ -132,7 +132,7 @@ vect2 vect2::operator++(int)
     return tmp;
 }
 
-vect2 vect2::operator--()
+vect2& vect2::operator--()
 {
     this->x -= 1;
     this->y -= 1;
@@ -164,7 +164,7 @@ vect2::~vect2(){};
 
 std::ostream& operator<<(std::ostream& os, const vect2& obj)
 {
-    std::cout << "{" << obj[1] << ", " << obj[2] << "}";
+    std::cout << "{" << obj[0] << ", " << obj[1] << "}";
     return os;
 }
 
