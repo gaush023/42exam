@@ -40,7 +40,7 @@ int& vect2::operator[](int index)
     return this->y;
 }
 
-vect2 vect2::vect2() const
+vect2 vect2::operator-() const
 {
     vect2 tmp = *this;
     tmp[0] = -tmp[0];
@@ -50,7 +50,7 @@ vect2 vect2::vect2() const
 
 vect2 vect2::operator*(int num) const
 {
-    vect2 tmp;
+    vect2 tmp = *this;
     
     tmp.x = tmp.x * num;
     tmp.y = tmp.y * num;
@@ -86,7 +86,7 @@ vect2&  vect2::operator*=(const vect2& obj)
     return *this;
 }
 
-vect2& vect2::operator+(const vect2& obj)
+vect2& vect2::operator+(const vect2& obj) const
 {
     vect2 tmp = *this;
     
@@ -96,7 +96,7 @@ vect2& vect2::operator+(const vect2& obj)
     return tmp;
 }
 
-vect2& vect2::operator-(const vect2& obj)
+vect2& vect2::operator-(const vect2& obj) const
 {
     vect2 tmp = *this;
     
@@ -106,7 +106,7 @@ vect2& vect2::operator-(const vect2& obj)
     return tmp;
 }
 
-vect2& vect2::operator*(const vect2& obj)
+vect2& vect2::operator*(const vect2& obj) const`
 {
     vect2 tmp = *this;
     
