@@ -44,7 +44,7 @@ vect2 vect2::vect2() const
 {
     vect2 tmp = *this;
     tmp[0] = -tmp[0];
-    tmp[1] = -tmo[1];
+    tmp[1] = -tmp[1];
     return tmp;
 }
 
@@ -53,7 +53,7 @@ vect2 vect2::operator*(int num) const
     vect2 tmp;
     
     tmp.x = tmp.x * num;
-    tmo.y = tmp.y * num;
+    tmp.y = tmp.y * num;
     return tmp;
 }
 
@@ -164,7 +164,7 @@ vect2::~vect2(){};
 
 std::ostream& operator<<(std::ostream& os, const vect2& obj)
 {
-    std::cout << "{" << obj[0] << ", " << obj[2] << "}";
+    std::cout << "{" << obj[1] << ", " << obj[2] << "}";
     return os;
 }
 
