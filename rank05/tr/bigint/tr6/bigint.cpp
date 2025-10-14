@@ -33,7 +33,7 @@ bigint& bigint::operator+=(const bigint &rhs){
 		} else {
 			a[i] = sum;
 			carry = 0;
-&	}
+		}
 	}
 	if (carry)
 		a.push_back(1);
@@ -79,22 +79,22 @@ bool bigint::operator<(const bigint &rhs) const{
 bigint::operator<<=(unsigned int n){*this = *this << n; return *this;}
 bigint::operator>>=(unsigned int n){*this = *this >> n; return *this;}
 
-bool bigint::operator>(const bigint &rhs) const { rhs > *this;}
-bool bigint::operator>=(const bigint &rhs) const { rhs > *this || rhs == this;}
-bool bigint::operator<=(const bigint &rhs) const { rhs < *this || rhs == this;}
-bool bigint::operator==(const bigint &rhs) const { a == a.rhs;}
+bool bigint::operator>(const bigint& rhs) const { return rhs < *this; }
+bool bigint::operator<=(const bigint& rhs) const { return (*this < rhs) || (*this == rhs);}
+bool bigint::operator>=(const bigint& rhs) const { return (*this > rhs) || (*this == rhs);}
+bool bigint::operator==(const bigint &rhs) const { a == rhs.a;}
 bool bigint::operator!=(const bigint &rhs) const { !(rhs == *this);}
 
 
-bigint::operator<<(const bigint &n)const{return *this << ft_round(n);}
-bigint::operator>>(const bigint &n)const{return *this >> ft_round(n);}
+bigint bigint::operator<<(const bigint &n)const{return *this << ft_round(n);}
+bigint bigint::operator>>(const bigint &n)const{return *this >> ft_round(n);}
 
 bigint::operator<<=(const bigint &n){*this = *this << n; return *this;}
 bigint::operator>>=(const bigint &n){*this = *this >> n; return *this;}
 
 unsigned int bigint::ft_round(const bigint &s){
 	unsigned int v;
-	for(unsigned int i = s.size() - 1; i >= 0; --i)	{
+	for(unsigned int i = s.a.size() - 1; i >= 0; --i)	{
 		v = v * 10 + s.a[i];
 		if(v > UINT_MAX) return UINT_MAX;
 	return (unsigned int)v;
@@ -131,12 +131,10 @@ void bigint::from_str(std::string &s){
 
 void bigint::from_int(unsigned int v){
 	a.clear();
-	if(v == 0) return a.push_back(0);
+	if(v == 0){ return a.push_back(0);}
 	while(v > 0){
 		a.push_back(digit_t(v % 10));
 		v /= 10;
 	}
 }
-
-
 
