@@ -3,19 +3,19 @@
 bigint::bigint() : a(1, 0) {}
 bigint::bigint(unsigned int v){from_int(v);}
 bigint::bigint(std::string &s){from_str(s);}
-bigint::bigint(const bigint &others) : a(others.s) {}
+bigint::bigint(const bigint &others) : a(others.a) {}
 
 std::string bigint::tostring() const{
 	if(a.size() == 1 && a[0] == 0) return "0"; 
-	std::string &s;
-	s.reserver(a.size());
-	for(int i = a.size() - 1; i > 0; --i;)
+	std::string s;
+	s.reserve(a.size());
+	for(int i = a.size() - 1; i > 0; --i)
 		s.push_back(a[i] + '0');
 	return s;
 }
 
 
-bigint::operator+(const bigint &rhs) const{
+bigint bigint::operator+(const bigint &rhs) const{
 	bigint tmp = *this;
 	tmp += rhs;
 	return tmp;
@@ -33,7 +33,7 @@ bigint& bigint::operator+=(const bigint &rhs){
 		} else {
 			a[i] = sum;
 			carry = 0;
-		}
+&	}
 	}
 	if (carry)
 		a.push_back(1);
@@ -105,6 +105,7 @@ bool bigint::is_zero() const{
 	if(a.size() == 1 && a[0] == 0)
 		return true;
 	return false;	
+}
 
 void bigint::normalize(){
 	while(a.size() > 1 && a.back() == 0) a.pop_back();

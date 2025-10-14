@@ -26,10 +26,10 @@ class bigint{
 		bigint operator>>=(unsigned int n);
 		bigint operator<<=(unsigned int n);
 
-		bool operator<(const bigint *rhs) const;
-		bool operator>(const bigint *rhs) const;
-		bool operator==(const bigint *rhs) const;
-		bool operator!=(const bigint *rhs) const;
+		bool operator<(const bigint &rhs) const;
+		bool operator>(const bigint &rhs) const;
+		bool operator==(const bigint &rhs) const;
+		bool operator!=(const bigint &rhs) const;
 		
 		bigint operator<<(const bigint &n) const;
 		bigint operator>>(const bigint &n) const;
