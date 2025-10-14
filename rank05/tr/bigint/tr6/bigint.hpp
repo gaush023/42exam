@@ -22,7 +22,7 @@ class bigint{
 		bigint operator++(int);
 
 		bigint operator<<(unsigned int n) const;
-		bigint operator>>(unsgined int n) const;
+		bigint operator>>(unsigned int n) const;
 		bigint operator>>=(unsigned int n);
 		bigint operator<<=(unsigned int n);
 
@@ -45,5 +45,5 @@ class bigint{
 		static unsigned int ft_round(const bigint &s);
 };
 
-std::ostream& (std::ostream& os, const bigint &x);
+std::ostream& operator<<(std::ostream& os, const bigint &x);
 
