@@ -65,12 +65,12 @@ bigint::operator<<(unsigned int n) const{
 bigint::operator>>(unsigned int n) const{
 	if(n >= a.size() ) return bigint(u0);
 	bigint o;
-	o.assgin(a.begin + n, a.end);
+	o.assgin(a.begin + n, a.end());
 	o.normalize();
 	return o;
 }
 
-bool bigint::operator<(const bigint *rhs) const{
+bool bigint::operator<(const bigint &rhs) const{
 	if(a.size() != rhs.a.size()) return a.size() < rhs.a.size();
 	for(int i = (int)a.size() - 1; i >= 0; --i)
 		if(a[i] != rhs.a[i]) return a.size() < rhs.a.size();
@@ -79,11 +79,11 @@ bool bigint::operator<(const bigint *rhs) const{
 bigint::operator<<=(unsigned int n){*this = *this << n; return *this;}
 bigint::operator>>=(unsigned int n){*this = *this >> n; return *this;}
 
-bool bigint::operator>(const bigint *rhs) const { rhs > *this;}
-bool bigint::operator>=(const bigint *rhs) const { rhs > *this || rhs == this;}
-bool bigint::operator<=(const bigint *rhs) const { rhs < *this || rhs == this;}
-bool bigint::operator==(const bigint *rhs) const { a == a.rhs;}
-bool bigint::operator!=(const bigint *rhs) const { !(rhs == *this);}
+bool bigint::operator>(const bigint &rhs) const { rhs > *this;}
+bool bigint::operator>=(const bigint &rhs) const { rhs > *this || rhs == this;}
+bool bigint::operator<=(const bigint &rhs) const { rhs < *this || rhs == this;}
+bool bigint::operator==(const bigint &rhs) const { a == a.rhs;}
+bool bigint::operator!=(const bigint &rhs) const { !(rhs == *this);}
 
 
 bigint::operator<<(const bigint &n)const{return *this << ft_round(n);}
