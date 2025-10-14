@@ -48,7 +48,7 @@ bigint& bigint::operator++() {
 
 
 
-bigint::operator++(int){
+bigint bigint::operator++(int){
 	bigint tmp = *this;
 	++(*this);
 	return tmp;
@@ -65,7 +65,7 @@ bigint::operator<<(unsigned int n) const{
 bigint::operator>>(unsigned int n) const{
 	if(n >= a.size() ) return bigint(u0);
 	bigint o;
-	o.assgin(a.begin + n, a.end());
+	o.assgin(a.begin() + n, a.end());
 	o.normalize();
 	return o;
 }
@@ -92,7 +92,7 @@ bigint::operator>>(const bigint &n)const{return *this >> ft_round(n);}
 bigint::operator<<=(const bigint &n){*this = *this << n; return *this;}
 bigint::operator>>=(const bigint &n){*this = *this >> n; return *this;}
 
-unsigned int bigdigit::ft_round(const bigint &s){
+unsigned int bigint::ft_round(const bigint &s){
 	unsigned int v;
 	for(unsigned int i = s.size() - 1; i >= 0; --i)	{
 		v = v * 10 + s.a[i];
