@@ -1,17 +1,16 @@
 #pragma once
 
 #include "searchable_bag.hpp"
-#include "node_bag.hpp"
+#include "tree_bag.hpp"
 
 
-class searchable_node_bag : public searchable_bag : public node_bag{
+class searchable_tree_bag: public searchable_bag, public tree_bag{
     private:
         bool search(node *n, const int v) const;
     public:
-        searchable_node_bag();
-        searchable_node_bag(const searchable_node_bag &s);
-        searchable_node_bag& operator=(const searchable_node_bag &s);
+        searchable_tree_bag();
+        searchable_tree_bag(const searchable_tree_bag &s);
+        searchable_tree_bag& operator=(const searchable_tree_bag &s);
         bool has(int value) const;
-        ~searchable_node_bag();
-}
-
+        ~searchable_tree_bag();
+};

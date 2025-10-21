@@ -15,23 +15,23 @@
 searchable_tree_bag::searchable_tree_bag(){}
 searchable_tree_bag::searchable_tree_bag(const searchable_tree_bag &source) : tree_bag(source) {}
 searchable_tree_bag& searchable_tree_bag::operator=(const searchable_tree_bag &source){
-        if(this != *source)
+        if(this != &source)
             tree_bag::operator=(source);
         return *this;
 }
 
 
-bool searchable_tree_bag::search(node *node, const int value){
-    if(node == nullptr)
+bool searchable_tree_bag::search(node *n, const int value){
+    if(n == nullptr)
         return false;
-    if(node->value == value)
+    if(n->value == value)
         return true;
-    if(value < node->value)
-        search(node->l, value);
+    if(value < n->value)
+        search(n->l, value);
     else {
-        search(node->r, value);
+        search(n->r, value);
     }
 }
 
-bool searchable_tree_bag::has(int value){ return search(this->tree, value);
+bool searchable_tree_bag::has(int value){ return search(this->tree, value);}
 searchable_tree_bag::~searchable_tree_bag(){}

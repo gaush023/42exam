@@ -1,15 +1,15 @@
-#include "searchable_node_bag.hpp"
+#include "searchable_tree_bag.hpp"
 
-searchable_node_bag::searchable_node_bag(){}
-searchable_node_bag::searchable_node_bag(const searchable_node_bag &s) : node_bag(s) {}
+searchable_tree_bag::searchable_tree_bag(){}
+searchable_tree_bag::searchable_tree_bag(const searchable_tree_bag &s) : tree_bag(s) {}
 
-searchable_node_bag& searchable_node_bag::operator=(const searchable_node_bag &s){
-    if(*this != s)
-        node_bag::operator=(s);
+searchable_tree_bag& searchable_tree_bag::operator=(const searchable_tree_bag &s){
+    if(this != &s)
+        tree_bag::operator=(s);
     return *this;
 }
 
-bool searchable_node_bag::search(node *n, const int value) const{
+bool searchable_tree_bag::search(node *n, const int value) const{
     if(n == nullptr)
         return false;
     if(n->value == value)
@@ -20,8 +20,8 @@ bool searchable_node_bag::search(node *n, const int value) const{
        return search(n->r, value);
 }
 
-bool searchable_node_bag::has(int value) const{
-    search(this->tree, value);
+bool searchable_tree_bag::has(int value) const{
+    return (search(this->tree, value));
 }
 
-searchable_node_bag::~searchable_node_bag(){}
+searchable_tree_bag::~searchable_tree_bag(){}
