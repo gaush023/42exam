@@ -1,0 +1,151 @@
+
+=== Running: ./a.out 5 10 15 ===
+create node: 5
+create node: 10
+create node: 15
+5 10 15 
+5 10 15 
+1
+1
+0
+0
+1
+1
+0
+0
+1
+1
+0
+0
+destroying value: 5
+destroying value: 10
+destroying value: 15
+
+create node: 5
+5 
+5 
+5 
+
+create node: 10
+1 2 3 4 -16 10 
+1 2 3 4 -16 10 
+5 10 
+
+create node: 15
+1 2 3 4 -16 15 
+1 2 3 4 -16 15 
+5 10 15
+✅ Test Passed
+
+=== Running: ./a.out 1 ===
+create node: 1
+1 
+1 
+1
+1
+0
+0
+destroying value: 1
+
+create node: 1
+1 
+1 
+1
+✅ Test Passed
+
+=== Running: ./a.out 1 2 3 4 5 ===
+create node: 1
+create node: 2
+create node: 3
+create node: 4
+create node: 5
+1 2 3 4 5 
+1 2 3 4 5 
+1
+1
+0
+0
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+destroying value: 1
+destroying value: 2
+destroying value: 3
+destroying value: 4
+destroying value: 5
+
+create node: 1
+1 
+1 
+1 
+
+create node: 2
+1 2 3 4 -16 
+1 2 3 4 -16 
+1 2 
+
+create node: 3
+1 2 3 4 -16 
+1 2 3 4 -16 
+1 2 3 
+
+create node: 4
+1 2 3 4 -16 
+1 2 3 4 -16 
+1 2 3 4 
+
+create node: 5
+1 2 3 4 -16 5 
+1 2 3 4 -16 5 
+1 2 3 4 5
+✅ Test Passed
+
+=== Running: ./a.out 10 10 20 ===
+create node: 10
+create node: 10
+duplicate value: delete node
+create node: 20
+10 20 
+10 10 20 
+1
+1
+0
+0
+1
+1
+0
+0
+1
+1
+0
+0
+destroying value: 10
+destroying value: 20
+
+create node: 10
+10 
+10 
+10 
+
+1 2 3 4 -16 10 
+1 2 3 4 -16 10 
+10 
+
+create node: 20
+1 2 3 4 -16 20 
+1 2 3 4 -16 20 
+10 20
+✅ Test Passed
