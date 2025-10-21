@@ -22,8 +22,8 @@ class set
 	public:
 		set() = delete;
 		set(const set& source) = delete;
-		set& operator=(const set& source) = delete;
-		set(searchable_bag& s_bag);
+		set& operator=(const set &source) = delete;
+		set(searchable_bag& s_bag) : s_bag(s_bag) {}
 
 		bool has(int) const;
 		void insert (int);
