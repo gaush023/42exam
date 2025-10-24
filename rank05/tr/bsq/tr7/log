@@ -1,0 +1,187 @@
+[case 1] FAIL
+--- expected
++++ actual
+@@ -1,7 +1 @@
+-...o....o..o.
+-...o..o..o...
+-.....BBBB.o..
+-..o..BBBB..o.
+-....oBBBB.o..
+-.....BBBB....
+-o....o....o..
++Error: ur map, why?
+
+[case 2] FAIL
+--- expected
++++ actual
+@@ -1,20 +1 @@
+-o...ooo.o.o..oo
+-..o............
+-oo....o.....o..
+-........oo.....
+-o...o...oo.....
+-...........o...
+-....oo..o..BBBB
+-...........BBBB
+-..o.......oBBBB
+-.....o...o.BBBB
+-........o...o.o
+-.oo..o........o
+-.o..o.o.o....oo
+-....o..o...oo..
+-...........ooo.
+-...............
+-....o.ooo.o....
+-.........o..o.o
+-.......o...o...
+-.o......o......
++Error: ur map, why?
+
+[case 3] FAIL
+--- expected
++++ actual
+@@ -1,11 +1 @@
+-oo.....o
+-...o...o
+-o..o..o.
+-..BBBBoo
+-o.BBBB..
+-..BBBB..
+-.oBBBB..
+-...o.o..
+-o..o.oo.
+-..o.....
+-...o....
++Error: ur map, why?
+
+[case 4] FAIL
+--- expected
++++ actual
+@@ -1,16 +1 @@
+-.BBB..oo
+-oBBB.oo.
+-.BBBoo..
+-o....o..
+-....o...
+-oo....o.
+-..o.....
+-...o....
+-....oo..
+-.o......
+-.....o.o
+-....o.o.
+-...o....
+-.o.oo...
+-........
+-.oo....o
++Error: ur map, why?
+
+[case 5] FAIL
+--- expected
++++ actual
+@@ -1,7 +1 @@
+-o....
+-BBB..
+-BBBo.
+-BBBo.
+-..o..
+-.....
+-.....
++Error: ur map, why?
+
+[case 6] FAIL
+--- expected
++++ actual
+@@ -1,7 +1 @@
+-BB.......
+-BB.o..o..
+-o..o....o
+-.........
+-.oo..ooo.
+-.o....o..
+-o.o......
++Error: ur map, why?
+
+[case 7] FAIL
+--- expected
++++ actual
+@@ -1,11 +1 @@
+-.....o.....
+-..........o
+-.o.......o.
+-.o....o....
+-..BBBBBB.o.
+-o.BBBBBB...
+-..BBBBBBo..
+-.oBBBBBB...
+-..BBBBBBo..
+-..BBBBBB...
+-..o.......o
++Error: ur map, why?
+
+[case 8] FAIL
+--- expected
++++ actual
+@@ -1,13 +1 @@
+-...o........o.....
+-oo...o..ooo.......
+-o.o...BBBB.....o..
+-...oo.BBBBo...o...
+-ooo...BBBB........
+-.....oBBBB...o....
+-.....o...o.....o..
+-.o.o......o...o...
+-.oo.oo..oo......o.
+-o...o.o.o.........
+-..o.........o.....
+-.o.......oo...o...
+-o............o....
++Error: ur map, why?
+
+[case 9] FAIL
+--- expected
++++ actual
+@@ -1,20 +1 @@
+-.o....
+-......
+-...o..
+-.oBBB.
+-o.BBB.
+-..BBBo
+-o.o...
+-o.oooo
+-...o.o
+-..oo..
+-...oo.
+-.o..o.
+-o...o.
+-.o...o
+-....o.
+-.o....
+-..oo.o
+-......
+-....oo
+-......
++Error: ur map, why?
+
+[case 10] FAIL
+--- expected
++++ actual
+@@ -1,15 +1 @@
+-...oo......o..
+-o.o....o..o...
+-....o..o......
+-......o...oo.o
+-..o....BBBB.oo
+-.......BBBB...
+-......oBBBBo.o
+-...o...BBBB...
+-o.......o..ooo
+-..o.....o...o.
+-.o..........o.
+-....o...oo....
+-...........o.o
+-o.......o.....
+-oo......o.....
++Error: ur map, why?
+

@@ -111,7 +111,7 @@ bool bigint::operator<(const bigint &s) const {
 }
 
 bool bigint::operator>(const bigint &s) const {
-    return s < *this;
+    return *this < s;
 }
 
 bool bigint::operator<=(const bigint &s) const {
@@ -130,7 +130,7 @@ std::string bigint::tostring() const{
   if(a.size() == 0){ return "0"; }
   std::string s;
   s.reserve(a.size());
-  for(int i = (int)a.size() - 1; i >= 0; --i)
+  for(int i = (int)a.size() ; i >= 0; --i)
     s.push_back(char(a[i] + '0'));
   return s;
 }

@@ -88,3 +88,4 @@ if __name__ == "__main__":
     keys_glider = draw_cells(glider, 5, 5, toggle_off=True)
     run_case("glider 5x5 / r=4", 5, 5, 4, keys_glider)
 
+
