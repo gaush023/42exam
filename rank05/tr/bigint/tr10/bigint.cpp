@@ -74,7 +74,7 @@ void bigint::normalize(){
 bigint bigint::operator>>(unsigned int num){
   if(num > a.size()) { return bigint(0u);}
   bigint out;
-  out.a.assign(a.begin() + num, a.end());
+  out.a.assign(out.a.begin() + num, a.end());
   out.normalize();
   return *this; 
 }
@@ -85,7 +85,7 @@ bigint bigint::operator>>=(unsigned int num){ return *this = *this >> num;}
 
 unsigned int bigint::t_u(const bigint &s){
   unsigned int v = 0;
-  for(int i = (int)s.a.size() - 1; i >= 0; --i){
+  for(int i = 0; i < s.a.size(); i++){
     v = v * 10 + s.a[i];
     if(v > UINT_MAX)
       return UINT_MAX;

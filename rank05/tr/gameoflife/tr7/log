@@ -1,0 +1,124 @@
+=== コンパイル開始 ===
+✔ コンパイル成功
+
+
+=== サンプル1 ===
+cmd: ./life 5 5 0
+stdin: 'sdxddssaaww'
+=== stdout ===
+     
+ 000 
+ 0 0 
+ 000 
+     
+
+
+=== サンプル2 ===
+cmd: ./life 10 6 0
+stdin: 'sdxssdswdxddddsxaadwxwdxwaa'
+=== stdout ===
+          
+ 0   000  
+ 0     0  
+ 000  0   
+  0  000  
+          
+
+
+=== 縦棒 iteration=0 ===
+cmd: ./life 3 3 0
+stdin: 'dxss'
+=== stdout ===
+ 0 
+ 0 
+ 0 
+
+
+=== 縦棒 iteration=1 ===
+cmd: ./life 3 3 1
+stdin: 'dxss'
+=== stdout ===
+   
+000
+   
+
+
+=== 縦棒 iteration=2 ===
+cmd: ./life 3 3 2
+stdin: 'dxss'
+=== stdout ===
+ 0 
+ 0 
+ 0 
+
+
+=== 空入力 ===
+cmd: ./life 5 5 0
+=== stdout ===
+     
+     
+     
+     
+     
+
+
+=== 1x1 生存セル ===
+cmd: ./life 1 1 0
+stdin: 'x'
+=== stdout ===
+0
+
+
+=== 1x1 死亡セル ===
+cmd: ./life 1 1 1
+stdin: 'x'
+=== stdout ===
+ 
+
+
+=== 大きめボード ===
+cmd: ./life 20 10 0
+stdin: 'sssssddddddddddxaaaaawww'
+=== stdout ===
+                    
+                    
+     0              
+     0              
+     0              
+     000000         
+                    
+                    
+                    
+                    
+
+
+=== ペン上下テスト ===
+cmd: ./life 5 5 0
+stdin: 'xdddxxsss'
+=== stdout ===
+0000 
+   0 
+   0 
+   0 
+     
+
+
+=== 長期イテレーション ===
+cmd: ./life 3 3 5
+stdin: 'dxss'
+=== stdout ===
+   
+000
+   
+
+
+=== 不正入力混入 ===
+cmd: ./life 5 5 0
+stdin: 'dxssQZZ!?'
+=== stdout ===
+ 0   
+ 0   
+ 0   
+     
+     
+
