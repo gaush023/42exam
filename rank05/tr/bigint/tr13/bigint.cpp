@@ -1,4 +1,5 @@
 #include "bigint.hpp"
+#include <algorithm>  // std::max
 
 void bigint::f_n(unsigned int v) {
     a.clear();
@@ -14,9 +15,7 @@ std::string bigint::tostring() const {
     while (i > 0 && a[i] == 0) i--;
     std::string s;
     s.reserve(i + 1);
-    for (; i >= 0; --i) {
-        s.push_back(char(a[i] + '0'));
-    }
+    for (; i >= 0; --i) s.push_back(char(a[i] + '0'));
     return s;
 }
 
@@ -64,10 +63,10 @@ bool bigint::is_zero() const {
 }
 
 bigint bigint::operator<<(unsigned int n) const {
-    if (is_zero()) return *this;
+    if (n == 0 || is_zero()) return *this;
     bigint out = *this;
-    // 上位桁側（末尾）にゼロを追加 → ×10^n
-    out.a.insert(out.a.end(), n, 0);
+    // 左シフト（×10^n）：先頭（下位桁側）に 0 を n 個挿入
+    out.a.insert(out.a.begin(), n, 0);
     return out;
 }
 
@@ -75,7 +74,7 @@ bigint bigint::operator>>(unsigned int n) const {
     if (n == 0) return *this;
     if (n >= a.size()) return bigint(0u);
     bigint out = *this;
-    // 下位桁を削除 → ÷10^n
+    // 右シフト（÷10^n）：先頭（下位桁側）から n 桁削除
     out.a.erase(out.a.begin(), out.a.begin() + n);
     out.normalize();
     return out;

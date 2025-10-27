@@ -28,7 +28,7 @@ public:
     bigint &operator++();     // ++x
     bigint operator++(int);   // x++
 
-    // digit shift
+    // digit shift（10進の桁シフト）
     bigint operator<<(unsigned int v) const;
     bigint operator>>(unsigned int v) const;
 
@@ -41,7 +41,7 @@ public:
     bigint &operator<<=(const bigint &s) { return *this <<= t_u(s); }
     bigint &operator>>=(const bigint &s) { return *this >>= t_u(s); }
 
-    // 比較演算子
+    // 比較
     bool operator==(const bigint &s) const { return a == s.a; }
     bool operator!=(const bigint &s) const { return !(*this == s); }
     bool operator<(const bigint &s) const;

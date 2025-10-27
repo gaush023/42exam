@@ -140,15 +140,20 @@ int main()
 
     // Large value manipulations
     {
-        bigint big = bigint(1) << 10; // 1 followed by 10 zeros
+        // 1 << 10 = 1 の後ろに 0 が10個（= 10^10 = 10000000000）
+        bigint big = bigint(1) << 10;
         bigint addend(99999);
         bigint sum = big + addend;
-        check_equal(sum, "100000000099999", "large-value-addition");
+
+        // 修正: 10^10 + 99999 = 10,000,099,999
+        check_equal(sum, "10000099999", "large-value-addition");
 
         bigint copy(sum);
-        check_equal(copy, "100000000099999", "copy-constructor");
+        check_equal(copy, "10000099999", "copy-constructor");
+
         copy += bigint(1);
-        check_equal(copy, "100000000100000", "copy-after-addition");
+        // 10,000,099,999 + 1 = 10,000,100,000
+        check_equal(copy, "10000100000", "copy-after-addition");
     }
 
     if (g_failed != 0)
@@ -160,4 +165,3 @@ int main()
     std::cout << "All tests passed (" << g_total << ")" << std::endl;
     return EXIT_SUCCESS;
 }
-
