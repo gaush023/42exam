@@ -72,7 +72,7 @@ bigint bigint::operator<<(unsigned int n) const {
 
 bigint bigint::operator>>(unsigned int n) const {
     if (n == 0) return *this;
-    if (n >= a.size()) return bigint(0u);
+    if (n > a.size()) return bigint(0u);
     bigint out = *this;
     // 右シフト（÷10^n）：先頭（下位桁側）から n 桁削除
     out.a.erase(out.a.begin(), out.a.begin() + n);
