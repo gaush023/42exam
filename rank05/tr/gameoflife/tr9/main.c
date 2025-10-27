@@ -14,28 +14,134 @@ typedef struct s_g{
 	char **bd;
 }t_g;
 
+
+char *fill_line(char c, int size){
+  char *tmp = (char *)malloc((size + 1) * sizeof(char));
+  if(!tmp)
+    return NULL;
+  for(int i = 0; i < size; i++)
+    tmp[i] = c;
+  tmp[size] = '\0';
+  return tmp;
+}
+
+void double_free(char **tab, int end){
+  if(tab){
+    for(int i = 0; i < end; i++)
+      free(tab[i]);
+    free(tab);
+  }
+}
+
 int init_game(t_g *g, char **av){
 	g->w = atoi(av[1]);
  	g->h = atoi(av[2]);
 	g->it = atoi(av[3]);
+  if(g->w <= 0 || g->h <= 0 || g->it < 0)
+    return -1;
 	g->a = 'O';
 	g->d = ' ';
 	g->i = 0;
 	g->j = 0;
 	g->flag = 0;
-	c
-
+	g->bd = (char **)malloc(g->h * sizeof(char *));
+  if(!g->bd)
+    return -1;
+  for(int i = 0; i < g->h; i++){
+    g->bd[i] = fill_line(g->d, g->w);
+    if(!g->bd[i]){double_free(g->bd, i); return -1;}
+  }
+  return 0;
 }
+
+void fill_board(t_g *g){
+  char bu;
+  while(read(STDIN_FILENO, &bu, 1)==1){
+    int flag = 0;
+    switch(bu){
+      case 'w': if(g->i > 0) g->i--; break;
+      case 's': if(g->i < g->h - 1) g->i++; break;
+      case 'a': if(g->j > 0) g->j--; break;
+      case 'd': if(g->j < g->w - 1) g->j++; break;
+      case 'x': g->flag = !(g->flag); break;
+      default: flag = 1; break;
+    }
+    if(g->flag && !flag){
+      if(g->i >= 0 && g->i < g->h && g->j >= 0 && g->j < g->w)
+        g->bd[g->i][g->j] = g->a;
+    }
+  }
+}
+
+int count_ne(t_g *g, int i, int j){
+  int count = 0;
+  for(int di = -1; di < 2; di++){
+    for(int dj = -1; dj < 2; dj++){
+      if(di == 0 && dj == 0)
+        continue;
+      int ni = i + di;
+      int nj = j + dj;
+      if(ni >= 0 && ni < g->h && nj >= 0 && nj < g->w){
+        if(g->bd[ni][nj] == g->a)
+          count++;
+      }
+    }
+  }
+  return count;
+}
+
+int play(t_g *g){
+  char **tmp = (char **)malloc(g->h * sizeof(char *));
+  if(!tmp) { double_free(g->bd, g->h); return -1;}
+  for(int i = 0; i < g->h; i++){
+    tmp[i] = fill_line(g->d, g->w);
+    if(!tmp[i]){ double_free(g->bd, g->h); double_free(tmp, i); return -1;}
+  }
+  for(int i = 0; i < g->h; i++){
+    for(int j = 0; j < g->w; j++){
+      int count = count_ne(g, i, j);
+      if(g->bd[i][j] == g->a){
+        if(count == 2 || count == 3)
+          tmp[i][j] = g->a;
+        else 
+          tmp[i][j] = g->d;
+      } else {
+        if(count == 3)
+          tmp[i][j] = g->a;
+        else 
+          tmp[i][j] = g->d;
+      }
+    }
+  }
+  double_free(g->bd, g->h);
+  g->bd = tmp;
+  return 0;
+}
+
+void print_b(t_g *g){
+  for(int i = 0; i < g->h; i++){
+    for(int j = 0; j < g->w; j++){
+      putchar(g->bd[i][j]);
+    }
+    putchar('\n');
+  }
+}
+
 
 int main(int ac, char **av){
 	if(ac != 4)
 		return 1;
 	t_g g;
-	if(init_game(&g) == -1)
-
+	if(init_game(&g, av) == -1)
+    return 1;
+  fill_board(&g);
+  for(int i = 0; i < g.it; i++){
+    if(play(&g) == -1)
+      return 1;
+  }
+  print_b(&g);
+  double_free(g.bd, g.h);
+  return 0;
 }
-
-
-
 
 
