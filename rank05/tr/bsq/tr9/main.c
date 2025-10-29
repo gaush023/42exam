@@ -45,50 +45,47 @@ void double_free(char *line, t_m *m){
     }
 }
 
-char *copy_line(char *line, int size){
-    char *tmp = (char *)malloc(size + 1* sizeof(char));
-    if(!tmp)
-        return NULL;
-    for(int i = 0; i < size; i++)
-        tmp[i] = line[i];
-    tmp[size] = '\0';
-    return tmp;
+int check_m(t_m *m, char c1, char c2){
+  for(int i = 0; i < m->h; i++){
+    for(int j = 0; j < m->w; j++){
+      if(!(m->m[i][j] == c1 && m->m[i][j] == c2))
+        return -1;
+    }
+  }
+  return 0;
 }
 
-int check_m(t_m *m, char c1, char c2){
-   for(int i = 0; i < m->h; i++){
-        for(int j = 0; j < m->w; j++){
-            if(m->m[i][j] != c1 && m->m[i][j] != c2)
-                return -1;
-        }
-    }
-    return 0;
+char *copyline(char *line, int res){
+    char *tmp = (char *)malloc(res + 1 * sizeof(char));
+    if(!tmp) return NULL;
+    for(int i = 0; i < res; i++)
+        tmp[i] = line[i];
+    tmp[res] = '\0';
+    return tmp;
 }
 
 int l_m(FILE *file, t_e *e, t_m *m){
     m->h = e->l;
     m->m = (char **)malloc(m->h * sizeof(char *));
-    if(!m->m) return -1;
-    
+    if(!m->m)
+        return -1;
     char *line = NULL;
     size_t len = 0;
-    getline(&line, &len, file);
+    getline(&line &len, file);
     for(int i = 0; i < m->h; i++){
-        ssize_t res = getline(&line, &len, file);
-        if(res == -1){ double_free(line, m); return -1;}
+        int res = getline(&line, &len, file);
+        if(res == -1){double_free(line, m->m); return -1;}
         if(line[res - 1] == '\n')
-            line[--res] = '\0';
-        else { double_free(line, m); return -1;}
-        m->m[i] = copy_line(line, (int)res);
-        if(!m->m[i]){ double_free(line, m); return -1;}
-        if(i == 0){ m->w = res;}
-        else{
-            if(m->w != (int)res) { double_free(line, m); return -1;}
-        }
+            line[res--] = '\0';
+        m->m[i] = copyline(line, res);
+        if(!m->m[i]){double_free(line, m->m); return -1;}
+        if(i = 0) m->w = res;
+        else{ if(m->w != res) {double_free(line, m->n); return -1;}
     }
     free(line);
     if(check_m(m, e->a, e->b) == -1){ double_free(NULL, m); return -1;}
     return 0;
+
 }
 
 int find_min(int a, int b, int c){
