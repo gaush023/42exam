@@ -30,8 +30,8 @@ int main(int ac, char **av){
     std::cout << "Error" << std::endl;
     return 1;
   }
-  signal(SIGINT, handler);
   path = av[2];
+  signal(SIGINT, handler);
   readDB();
     
   Server sever(std::atoi(av[1]), db);  

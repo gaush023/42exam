@@ -1,5 +1,5 @@
 #pragma once
-
+#include <signal.h>
 #include <map>
 #include <fstream>
 #include <sstream>

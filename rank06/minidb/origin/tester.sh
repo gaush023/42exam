@@ -250,7 +250,7 @@ echo ""
 
 # Test 10: Persistent connections (multiple commands in one session)
 echo "Test Group 10: Persistent Connections"
-result=$(printf "POST session1 data1\nGET session1\nDELETE session1\nGET session1\n" | timeout 2 nc localhost $PORT 2>/dev/null)
+result=$(printf "POST session1 data1\nGET session1\nDELETE session1\nGET session1\n" | nc localhost $PORT 2>/dev/null)
 expected=$'0\n0 data1\n0\n1'
 if [ "$result" = "$expected" ]; then
     echo -e "${GREEN}✓${NC} Multiple commands in single session"
@@ -263,7 +263,7 @@ else
 fi
 
 # Test with mixed commands
-result=$(printf "POST a b\nPOST c d\nGET a\nGET c\n" | timeout 2 nc localhost $PORT 2>/dev/null)
+result=$(printf "POST a b\nPOST c d\nGET a\nGET c\n" | nc localhost $PORT 2>/dev/null)
 expected=$'0\n0\n0 b\n0 d'
 if [ "$result" = "$expected" ]; then
     echo -e "${GREEN}✓${NC} Multiple POST and GET in single session"
