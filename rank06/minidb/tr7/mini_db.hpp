@@ -10,6 +10,9 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/epoll.h>
+#include <fcntl.h>
 
 class Socket
 {
@@ -76,8 +79,8 @@ class Server
 private:
     Socket _listeningSocket;
     std::map<std::string, std::string> &db;
-    fd_set rfds, afds;
-    int max_fd;
+    int epoll_fd;
+    std::map<int, std::string> pending_writes; // fd -> response to send
 
     void handle_msg(int clientFd, std::string msg)
     {
@@ -92,24 +95,23 @@ private:
         std::string command, key, value;
         iss >> command >> key >> value;
 
+        std::string response;
+
         if (command == "POST" && !value.empty())
         {
             db[key] = value;
-            const char *res = "0\n";
-            ::send(clientFd, res, 2, 0);
+            response = "0\n";
         }
         else if (command == "GET" && value.empty())
         {
             std::map<std::string, std::string>::iterator it = db.find(key);
             if (it != db.end())
             {
-                std::string res = "0 " + it->second + "\n";
-                ::send(clientFd, res.c_str(), res.size(), 0);
+                response = "0 " + it->second + "\n";
             }
             else
             {
-                const char *res = "1\n";
-                ::send(clientFd, res, 2, 0);
+                response = "1\n";
             }
         }
         else if (command == "DELETE" && value.empty())
@@ -118,27 +120,39 @@ private:
             if (it != db.end())
             {
                 db.erase(it);
-                const char *res = "0\n";
-                ::send(clientFd, res, 2, 0);
+                response = "0\n";
             }
             else
             {
-                const char *res = "1\n";
-                ::send(clientFd, res, 2, 0);
+                response = "1\n";
             }
         }
         else
         {
-            const char *res = "2\n";
-            ::send(clientFd, res, 2, 0);
+            response = "2\n";
         }
+
+        // レスポンスをpending_writesに格納し、EPOLLOUTイベントを監視
+        pending_writes[clientFd] = response;
+        struct epoll_event ev;
+        ev.events = EPOLLOUT | EPOLLET;
+        ev.data.fd = clientFd;
+        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, clientFd, &ev);
     }
 
 public:
     Server(int port, std::map<std::string, std::string> &database)
-        : _listeningSocket(port), db(database), max_fd(0)
+        : _listeningSocket(port), db(database), epoll_fd(-1)
     {
-        FD_ZERO(&afds);
+        epoll_fd = epoll_create1(0);
+        if (epoll_fd == -1)
+            throw std::runtime_error("epoll_create1 failed");
+    }
+
+    ~Server()
+    {
+        if (epoll_fd != -1)
+            close(epoll_fd);
     }
 
     int run()
@@ -146,44 +160,79 @@ public:
         try
         {
             _listeningSocket.bindAndListen();
-            max_fd = _listeningSocket._sockfd;
-            FD_SET(max_fd, &afds);
+
+            // リスニングソケットをepollに登録
+            struct epoll_event ev;
+            ev.events = EPOLLIN;
+            ev.data.fd = _listeningSocket._sockfd;
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _listeningSocket._sockfd, &ev) == -1)
+                throw std::runtime_error("epoll_ctl: listen socket");
 
             // listen 成功後に ready 出力（テスター仕様）
             std::cout << "ready" << std::endl;
 
+            struct epoll_event events[1024];
+
             while (true)
             {
-                struct sockaddr_in clientAddr;
-                rfds = afds;
-
-                if (select(max_fd + 1, &rfds, NULL, NULL, NULL) < 0)
-                    throw std::runtime_error("select failed");
-
-                for (int fd = 0; fd <= max_fd; fd++)
+                int nfds = epoll_wait(epoll_fd, events, 1024, -1);
+                if (nfds == -1)
                 {
-                    if (!FD_ISSET(fd, &rfds))
+                    if (errno == EINTR)
                         continue;
+                    throw std::runtime_error("epoll_wait failed");
+                }
+
+                for (int i = 0; i < nfds; i++)
+                {
+                    int fd = events[i].data.fd;
 
                     if (fd == _listeningSocket._sockfd)
                     {
                         // 新規接続
+                        struct sockaddr_in clientAddr;
                         int clientFd = _listeningSocket.accept(clientAddr);
-                        FD_SET(clientFd, &afds);
-                        max_fd = clientFd > max_fd ? clientFd : max_fd;
+
+                        // クライアントソケットをepollに登録（EPOLLIN）
+                        struct epoll_event client_ev;
+                        client_ev.events = EPOLLIN | EPOLLET;
+                        client_ev.data.fd = clientFd;
+                        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientFd, &client_ev) == -1)
+                        {
+                            ::close(clientFd);
+                            continue;
+                        }
                     }
-                    else
+                    else if (events[i].events & EPOLLIN)
                     {
                         // 既存接続からのメッセージ
                         std::string message = _listeningSocket.pullMessage(fd);
                         if (message.empty())
                         {
                             // 接続切断
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+                            pending_writes.erase(fd);
                             ::close(fd);
-                            FD_CLR(fd, &afds);
-                            break;
+                            continue;
                         }
                         handle_msg(fd, message);
+                    }
+                    else if (events[i].events & EPOLLOUT)
+                    {
+                        // 書き込み可能
+                        std::map<int, std::string>::iterator it = pending_writes.find(fd);
+                        if (it != pending_writes.end())
+                        {
+                            const std::string &response = it->second;
+                            ssize_t sent = ::send(fd, response.c_str(), response.size(), 0);
+                            if (sent > 0)
+                            {
+                                // 送信完了したら接続を閉じる
+                                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+                                pending_writes.erase(it);
+                                ::close(fd);
+                            }
+                        }
                     }
                 }
             }
