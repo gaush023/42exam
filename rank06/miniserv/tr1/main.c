@@ -121,6 +121,11 @@ int main(int argc, char **argv)
     if (sockfd < 0)
         fatal_error();
     max_fd = sockfd;
+
+    int opt = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+        fatal_error();
+
     FD_SET(sockfd, &afds);
 
     struct sockaddr_in servaddr;

@@ -1,12 +1,14 @@
 #include "mini_db.hpp"
+#include <csignal>
+#include <fstream>
 
 std::string path;
 std::map<std::string, std::string> db;
 
 void handler(int signalNum){
-    std::ofstream file(path.c_str());
+    std::ofstream file (path.c_str());
     if(!file.is_open()){
-        std::cout << "Worng" << std::endl;
+        std::cout << "Wrong" << std::endl;
         exit(signalNum);
     }
     std::map<std::string, std::string>::const_iterator it;
@@ -17,23 +19,24 @@ void handler(int signalNum){
 }
 
 void readDB(){
-    std::ifstream file(path.c_str());
-    if(!file.is_open()){return;}
+    std::ifstream file (path.c_str());
+    if(!file.is_open()) return;
     std::string key, value;
     while(file >> key >> value)
         db[key] = value;
 }
 
-int main(int ac, char **av){
+
+int main(int ac, char **av)
+{
     if(ac != 3){
-        std::cout << "Worng" << std::endl;
+        std::cout << "Wrong" << std::endl;
         return 1;
     }
-    path = av[2];
+	path = av[2];
     signal(SIGINT, handler);
-    readDB();        
-    
+    readDB();
+
     Server server(std::atoi(av[1]), db);
-    server.run();
-    return 0;
+	return server.run();
 }

@@ -1,0 +1,2 @@
+server: client 1 just arrived
+server: client 1 just left

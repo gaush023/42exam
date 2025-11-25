@@ -1,15 +1,15 @@
 #pragma once
 
-#include <sstream>
-#include <fstream>
-#include <map>
-#include <signal.h>
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <map>
+#include <sys/epoll.h>
+#include <signal.h>
+#include <sstream>
 
 class Socket
 {
@@ -24,7 +24,10 @@ public:
 			if(_sockfd == -1){
 				throw std::runtime_error("Socket creation failed");
 			}
-
+            int opt = 1;
+            if(::setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+                throw std::runtime_error("setsockopt failed");
+            
 			memset(&_servaddr, 0, sizeof(_servaddr));
 			_servaddr.sin_family = AF_INET;
 			_servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -60,15 +63,15 @@ public:
 			}
 			return clientSocketFd;
 		}
-		std::string pullMessage(int cfd)
+		std::string pullMessage(int clientfd)
 		{
-            char buf[1024];
-            int r = recv(cfd, buf, 1000, 0);
+	        char buf[1024];
+            int r = recv(clientfd, buf, sizeof(buf)-1, 0);
             if(r <= 0)
-                return "";
+                return std::string("");
             buf[r] = '\0';
             return std::string(buf);
-		}
+        }
 };
 
 class Server
@@ -76,61 +79,122 @@ class Server
 private: 
 	Socket _listeningSocket;
     std::map<std::string, std::string> &db;
+    int epoll_fd;
+    std::map<int, std::string> _pending;
     
-    fd_set afds;
-    fd_set rfds;
-    int max_fd;
+    void handle_msg(int clientfd, std::string msg){
+    	while(!msg.empty() && (msg[msg.length() - 1] == '\n' || msg[msg.length() - 1] == '\r'))
+		msg.erase(msg.length() - 1);
+	while(msg.length() >= 2 && msg[msg.length() - 2] == '\\' && msg[msg.length() - 1] == '\n')
+		msg.erase(msg.length() - 2);
+       	std::istringstream iss(msg);
+	std::string command, key, value;
+	iss >> command >> key;
+	std::getline(iss, value);
+	if(!value.empty() && value[0] == ' ')
+		value.erase(0, 1);
+	std::string response;
+	if(command == "POST" && !value.empty()){
+		db[key] = value;
+		response = "0\n";
+	} else if(command == "GET" && value.empty()){
+		std::map<std::string, std::string>::iterator it = db.find(key);
+		if(it != db.end())
+	       		response = "0 " + it->second + "\n";
+		else
+	       		response = "1\n";
+	} else if(command == "DELETE" && value.empty()){
+		std::map<std::string, std::string>::iterator it = db.find(key);
+		if(it != db.end()){
+			db.erase(it);
+	       		response = "0\n";
+		} else
+			response = "1\n";
+
+	} else
+		response = "2\n";
+    	_pending[clientfd] = response;
+	struct epoll_event ev;
+	ev.events = EPOLLOUT | EPOLLET;
+   	ev.data.fd = clientfd;
+	epoll_ctl(epoll_fd, EPOLL_CTL_MOD, clientfd, &ev);
+    } 
+
 
 public:
 	Server(int port, std::map<std::string, std::string> &database) :
-		_listeningSocket(port), db(database)
-		{
-            FD_ZERO(&afds);
-		}
-    
-    void handle_msg(int cfd, const std::string &msg){
-        std::istringstream iss(msg);
-        std::string command, key, value;
-        iss >> command >> key;
-        std::getline(iss, value);
-        if(!value.empty() && value[0] == ' ') value = value.substr(1);
-        if(command == "POST" && !value.empty()){
-            db[key] = value;
-            send(cfd, "0\n", 2, 0);
-        } else if(command == "GET" && value.empty()){
-            if(db.find(key) != db.end()){
-                std::string res = "0 " + db[key] + "\n";
-                send(cfd, res.c_str(), res.size(), 0);
-            } else {
-                send(cfd, "1\n", 2, 0);
-            }
-        }else if(command == "DELETE" && value.empty()){
-            if(db.find(key) != db.end()){
-                db.erase(key);
-                send(cfd, "0\n", 2, 0);
-            } else {
-                send(cfd, "1\n", 2, 0);
-            }
-        }else {
-                send(cfd, "2\n", 2, 0);
-        }
-    } 
-	int run()
+	_listeningSocket(port), db(database), epoll_fd(-1){
+		epoll_fd = epoll_create1(0);
+		if(epoll_fd == -1)
+                    throw std::runtime_error("epoll_ctl: listne socket");
+	}	
+    	~Server(){
+		if(epoll_fd != -1)
+			close(epoll_fd);
+	}	
+    	int run()
 		{
 			try
 			{
 				_listeningSocket.bindAndListen();
-		        FD_ZERO(&afs);
-                FD_SET(_listeningSocket._sockfd, &afs);
-                
-        
-            }
+				struct epoll_event ev;
+			       	ev.events = EPOLLIN;
+				ev.data.fd = _listeningSocket._sockfd;
+				if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
+                    			throw std::runtime_error("epoll_ctl: listne socket");
+				std::cout << "ready" << std::endl;
+				struct epoll_event events[1024];
+				while(true){
+					int nfds = epoll_wait(epoll_fd, events, 1024, -1);
+					if(nfds == -1){
+						if(errno == EINTR)
+							continue;	
+                    				throw std::runtime_error("epoll_ctl: listne socket");
+					}
+					for(int i = 0; i < nfds; i++){
+						int fd = events[i].data.fd;
+						if(fd == _listeningSocket._sockfd){
+							struct sockaddr_in clientAddr;
+							int clientfd = _listeningSocket.accept(clientAddr);
+							struct epoll_event cev;
+							cev.events = EPOLLIN | EPOLLET;
+							cev.data.fd = clientfd;
+							if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientfd, &cev) == -1){
+								::close(clientfd);
+								continue;
+							}	
+						} else if(events[i].events & EPOLLIN){	
+							std::string msg = _listeningSocket.pullMessage(fd);
+							if(msg.empty()){
+								epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+								_pending.erase(fd);
+								::close(fd);
+								continue;
+							}
+							handle_msg(fd, msg);
+						} else if(events[i].events & EPOLLOUT){
+							std::map<int, std::string>::iterator it = _pending.find(fd);
+							if(it != _pending.end()){
+								const std::string &res = it->second;
+								int sent = send(fd, res.c_str(), res.size(), 0);
+								if(sent > 0){
+									epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+									_pending.erase(fd);
+									::close(fd);
+								}	
+							}
+						}
+					
+					}
+				
+				}
+				return 0; // Return success code
+			}
 			catch(const std::exception& e)
 			{
 				std::cerr << "Error during server run: " << e.what() << std::endl;
 				return 1; // Return error code if server fails to start
 			}
-			return 0; //Success
 		}
 };
 
