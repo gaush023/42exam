@@ -63,14 +63,14 @@ public:
 			}
 			return clientSocketFd;
 		}
-		std::string pullMessage(int clientfd)
-		{
-	        char buf[1024];
-            int r = recv(clientfd, buf, sizeof(buf)-1, 0);
-            if(r <= 0)
-                return std::string("");
-            buf[r] = '\0';
-            return std::string(buf);
+	std::string pullMessage(int clientfd)
+	{
+		char buf[1024];
+		int r = recv(clientfd, buf, 1024, 0);
+		if(r <= 0)
+			std::string ("");
+		buf[r] = '\0';
+		return std::string(buf);
         }
 };
 
@@ -78,10 +78,10 @@ class Server
 {
 private: 
 	Socket _listeningSocket;
-    std::map<std::string, std::string> &db;
-    int epoll_fd;
-    std::map<int, std::string> _pending;
-    
+   	std::map<std::string, std::string> &db;
+       	int epoll_fd;
+	std::map<int, std::string> _pending;
+
     void handle_msg(int clientfd, std::string msg){
     	while(!msg.empty() && (msg[msg.length() - 1] == '\n' || msg[msg.length() - 1] == '\r'))
 		msg.erase(msg.length() - 1);
@@ -116,7 +116,7 @@ private:
     	_pending[clientfd] = response;
 	struct epoll_event ev;
 	ev.events = EPOLLOUT | EPOLLET;
-   	ev.data.fd = clientfd;
+	ev.data.fd = clientfd;
 	epoll_ctl(epoll_fd, EPOLL_CTL_MOD, clientfd, &ev);
     } 
 
@@ -138,7 +138,7 @@ public:
 			{
 				_listeningSocket.bindAndListen();
 				struct epoll_event ev;
-			       	ev.events = EPOLLIN;
+				ev.events = EPOLLIN;
 				ev.data.fd = _listeningSocket._sockfd;
 				if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, ev.data.fd, &ev) == -1)
                     			throw std::runtime_error("epoll_ctl: listne socket");
@@ -148,7 +148,7 @@ public:
 					int nfds = epoll_wait(epoll_fd, events, 1024, -1);
 					if(nfds == -1){
 						if(errno == EINTR)
-							continue;	
+							continue;
                     				throw std::runtime_error("epoll_ctl: listne socket");
 					}
 					for(int i = 0; i < nfds; i++){
@@ -162,8 +162,8 @@ public:
 							if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientfd, &cev) == -1){
 								::close(clientfd);
 								continue;
-							}	
-						} else if(events[i].events & EPOLLIN){	
+							}
+						} else if(events[i].events & EPOLLIN){
 							std::string msg = _listeningSocket.pullMessage(fd);
 							if(msg.empty()){
 								epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
@@ -179,11 +179,11 @@ public:
 								int sent = send(fd, res.c_str(), res.size(), 0);
 								if(sent > 0){
 									epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-									_pending.erase(fd);
+									_pending.erase(it);
 									::close(fd);
-								}	
+								}
 							}
-						}
+						}	
 					
 					}
 				

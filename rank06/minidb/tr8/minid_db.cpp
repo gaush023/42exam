@@ -36,7 +36,6 @@ int main(int ac, char **av)
     path = av[2];
     signal(SIGINT, handler);
     readDB();
-
 	Server server(std::atoi(av[1]), db);
 	return server.run();
 }
