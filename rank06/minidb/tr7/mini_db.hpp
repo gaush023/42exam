@@ -6,12 +6,12 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <cerrno>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <unistd.h>
-#include <errno.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 class Socket
@@ -28,220 +28,227 @@ public:
         if (_sockfd == -1)
             throw std::runtime_error("Socket creation failed");
 
-        // アドレス再利用（テスト連続実行対策）
         int opt = 1;
         if (::setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
             throw std::runtime_error("setsockopt failed");
 
-        std::memset(&_servaddr, 0, sizeof(_servaddr));
+        memset(&_servaddr, 0, sizeof(_servaddr));
         _servaddr.sin_family      = AF_INET;
         _servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
         _servaddr.sin_port        = htons(port);
+
+        // listening socket も nonblock にしてOK
+        fcntl(_sockfd, F_SETFL, O_NONBLOCK);
     }
 
     ~Socket()
     {
         if (_sockfd != -1)
-            ::close(_sockfd);
+            close(_sockfd);
     }
 
     void bindAndListen()
     {
-        if (::bind(_sockfd, (struct sockaddr *)&_servaddr, sizeof(_servaddr)) < 0)
+        if (bind(_sockfd, (struct sockaddr *)&_servaddr, sizeof(_servaddr)) < 0)
             throw std::runtime_error("Socket bind failed");
 
-        if (::listen(_sockfd, 10) < 0)
+        if (listen(_sockfd, 10) < 0)
             throw std::runtime_error("Socket listen failed");
     }
 
-    int accept(struct sockaddr_in &clientAddr)
+    int acceptClient()
     {
-        socklen_t clientLen = sizeof(clientAddr);
-        int clientSocketFd = ::accept(_sockfd, (struct sockaddr *)&clientAddr, &clientLen);
-        if (clientSocketFd < 0)
-            throw std::runtime_error("Failed to accept connection");
-        return clientSocketFd;
+        sockaddr_in clientAddr;
+        socklen_t len = sizeof(clientAddr);
+
+        int cfd = ::accept(_sockfd, (struct sockaddr *)&clientAddr, &len);
+        if (cfd < 0)
+            return -1;
+        fcntl(cfd, F_SETFL, O_NONBLOCK);
+        return cfd;
     }
 
-    std::string pullMessage(int clientFd)
+    std::string recvMsg(int fd)
     {
-        char buf[1024];
-        int byte_read = recv(clientFd, buf, sizeof(buf) - 1, 0);
-        if (byte_read <= 0)
-            return std::string("");
-        buf[byte_read] = '\0';
-        return std::string(buf);
+      std::string result;
+      char buf[1024];
+
+      while (true)
+      {
+          int n = recv(fd, buf, sizeof(buf) - 1, 0);
+
+          if (n > 0)
+          {
+              buf[n] = 0;
+              result += buf;
+          }
+          else if (n == -1 && errno == EAGAIN)
+          {
+              break;
+          }
+          else
+          {
+              return "";
+          }
+      }
+      return result;
     }
 };
+
+// ===========================================================================
 
 class Server
 {
 private:
-    Socket _listeningSocket;
+    Socket sock;
     std::map<std::string, std::string> &db;
-    int epoll_fd;
-    std::map<int, std::string> pending_writes; // fd -> response to send
+    int epfd;
 
-    void handle_msg(int clientFd, std::string msg)
+    // fd -> 送信予定バッファ
+    std::map<int, std::string> writeBuf;
+
+    void handleMsg(int fd, std::string msg)
     {
-        // 末尾の改行文字を削除 (実際の\nと、リテラルの\nの両方)
-        while (!msg.empty() && (msg[msg.length() - 1] == '\n' || msg[msg.length() - 1] == '\r'))
-            msg.erase(msg.length() - 1);
-        // リテラルの"\n"を削除 (バックスラッシュ + n)
-        while (msg.length() >= 2 && msg[msg.length() - 2] == '\\' && msg[msg.length() - 1] == 'n')
-            msg.erase(msg.length() - 2);
+        // remove trailing \n
+        while (!msg.empty() && (msg.back() == '\n' || msg.back() == '\r'))
+            msg.pop_back();
 
         std::istringstream iss(msg);
-        std::string command, key, value;
-        iss >> command >> key >> value;
+        std::string cmd, key, val;
+        iss >> cmd >> key >> val;
 
-        std::string response;
+        std::string resp;
 
-        if (command == "POST" && !value.empty())
+        if (cmd == "POST" && !val.empty())
         {
-            db[key] = value;
-            response = "0\n";
+            db[key] = val;
+            resp = "0\n";
         }
-        else if (command == "GET" && value.empty())
+        else if (cmd == "GET" && val.empty())
         {
-            std::map<std::string, std::string>::iterator it = db.find(key);
-            if (it != db.end())
+            if (db.count(key))
+                resp = "0 " + db[key] + "\n";
+            else
+                resp = "1\n";
+        }
+        else if (cmd == "DELETE" && val.empty())
+        {
+            if (db.count(key))
             {
-                response = "0 " + it->second + "\n";
+                db.erase(key);
+                resp = "0\n";
             }
             else
-            {
-                response = "1\n";
-            }
-        }
-        else if (command == "DELETE" && value.empty())
-        {
-            std::map<std::string, std::string>::iterator it = db.find(key);
-            if (it != db.end())
-            {
-                db.erase(it);
-                response = "0\n";
-            }
-            else
-            {
-                response = "1\n";
-            }
+                resp = "1\n";
         }
         else
         {
-            response = "2\n";
+            resp = "2\n";
         }
 
-        // レスポンスをpending_writesに格納し、EPOLLOUTイベントを監視
-        pending_writes[clientFd] = response;
+        writeBuf[fd] = resp;
+
         struct epoll_event ev;
-        ev.events = EPOLLOUT | EPOLLET;
-        ev.data.fd = clientFd;
-        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, clientFd, &ev);
+        ev.events = EPOLLOUT | EPOLLIN; // OUT を有効化
+        ev.data.fd = fd;
+        epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
     }
 
 public:
     Server(int port, std::map<std::string, std::string> &database)
-        : _listeningSocket(port), db(database), epoll_fd(-1)
+        : sock(port), db(database)
     {
-        epoll_fd = epoll_create1(0);
-        if (epoll_fd == -1)
+        epfd = epoll_create1(0);
+        if (epfd < 0)
             throw std::runtime_error("epoll_create1 failed");
-    }
-
-    ~Server()
-    {
-        if (epoll_fd != -1)
-            close(epoll_fd);
     }
 
     int run()
     {
-        try
+        sock.bindAndListen();
+
+        struct epoll_event ev;
+        ev.events = EPOLLIN;
+        ev.data.fd = sock._sockfd;
+        epoll_ctl(epfd, EPOLL_CTL_ADD, sock._sockfd, &ev);
+
+        std::cout << "ready" << std::endl;
+
+        struct epoll_event events[1024];
+
+        while (true)
         {
-            _listeningSocket.bindAndListen();
-
-            // リスニングソケットをepollに登録
-            struct epoll_event ev;
-            ev.events = EPOLLIN;
-            ev.data.fd = _listeningSocket._sockfd;
-            if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _listeningSocket._sockfd, &ev) == -1)
-                throw std::runtime_error("epoll_ctl: listen socket");
-
-            // listen 成功後に ready 出力（テスター仕様）
-            std::cout << "ready" << std::endl;
-
-            struct epoll_event events[1024];
-
-            while (true)
+            int n = epoll_wait(epfd, events, 1024, -1);
+            if (n < 0)
             {
-                int nfds = epoll_wait(epoll_fd, events, 1024, -1);
-                if (nfds == -1)
+                if (errno == EINTR)
+                    continue;
+                throw std::runtime_error("epoll_wait failed");
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                int fd = events[i].data.fd;
+
+                // --- accept
+                if (fd == sock._sockfd)
                 {
-                    if (errno == EINTR)
-                        continue;
-                    throw std::runtime_error("epoll_wait failed");
+                    int cfd;
+                    while ((cfd = sock.acceptClient()) != -1)
+                    {
+                        struct epoll_event cev;
+                        cev.events = EPOLLIN;
+                        cev.data.fd = cfd;
+                        epoll_ctl(epfd, EPOLL_CTL_ADD, cfd, &cev);
+                    }
+                    continue;
                 }
 
-                for (int i = 0; i < nfds; i++)
+                // --- readable
+                if (events[i].events & EPOLLIN)
                 {
-                    int fd = events[i].data.fd;
+                    std::string msg = sock.recvMsg(fd);
+                    if (msg.empty())
+                    {
+                        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
+                        writeBuf.erase(fd);
+                        close(fd);
+                        continue;
+                    }
+                    handleMsg(fd, msg);
+                }
 
-                    if (fd == _listeningSocket._sockfd)
-                    {
-                        // 新規接続
-                        struct sockaddr_in clientAddr;
-                        int clientFd = _listeningSocket.accept(clientAddr);
+                // --- writable
+                if (events[i].events & EPOLLOUT)
+                {
+                    auto it = writeBuf.find(fd);
+                    if (it == writeBuf.end())
+                        continue;
 
-                        // クライアントソケットをepollに登録（EPOLLIN）
-                        struct epoll_event client_ev;
-                        client_ev.events = EPOLLIN | EPOLLET;
-                        client_ev.data.fd = clientFd;
-                        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientFd, &client_ev) == -1)
-                        {
-                            ::close(clientFd);
-                            continue;
-                        }
-                    }
-                    else if (events[i].events & EPOLLIN)
+                    std::string &buf = it->second;
+
+                    ssize_t sent = send(fd, buf.c_str(), buf.size(), 0);
+                    if (sent == -1)
                     {
-                        // 既存接続からのメッセージ
-                        std::string message = _listeningSocket.pullMessage(fd);
-                        if (message.empty())
-                        {
-                            // 接続切断
-                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-                            pending_writes.erase(fd);
-                            ::close(fd);
-                            continue;
-                        }
-                        handle_msg(fd, message);
+                        if (errno == EAGAIN)
+                            continue; // 次のEPOLLOUTを待つ
+                        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
+                        writeBuf.erase(fd);
+                        close(fd);
+                        continue;
                     }
-                    else if (events[i].events & EPOLLOUT)
+                    if (sent < (ssize_t)buf.size())
                     {
-                        // 書き込み可能
-                        std::map<int, std::string>::iterator it = pending_writes.find(fd);
-                        if (it != pending_writes.end())
-                        {
-                            const std::string &response = it->second;
-                            ssize_t sent = ::send(fd, response.c_str(), response.size(), 0);
-                            if (sent > 0)
-                            {
-                                // 送信完了したら接続を閉じる
-                                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-                                pending_writes.erase(it);
-                                ::close(fd);
-                            }
-                        }
+                        buf.erase(0, sent); // 残りを保持
+                        continue; // 次の EPOLLOUT
                     }
+                    writeBuf.erase(fd);
+                    epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
+                    close(fd);
                 }
             }
-            return 0;
         }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error during server run: " << e.what() << std::endl;
-            return 1;
-        }
+
+        return 0;
     }
 };
