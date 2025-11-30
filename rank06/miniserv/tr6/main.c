@@ -92,14 +92,30 @@ void remove_client(int fd){
 }
 
 void send_pending_msg(int fd){
-  char *msg = NULL; 
-  while(extract_message(&msgs[fd], &msg)){
-    sprintf(bufw, "client %d: %s", ids[fd], msg);
-    notify_all(fd, bufw);
-    free(msg);
-  }
-} 
+    char *msg = NULL;
+    int r;
 
+    while (1) {
+        r = extract_message(&msgs[fd], &msg);
+
+        if (r == -1) {
+            if (msgs[fd]) {
+                free(msgs[fd]);
+                msgs[fd] = NULL;
+            }
+            remove_client(fd);
+            return; 
+        }
+
+        if (r == 0) {
+            return;
+        }
+
+        sprintf(bufw, "client %d: %s", ids[fd], msg);
+        notify_all(fd, bufw);
+        free(msg);
+    }
+}
 int main(int ac, char **av) {
 
   if(ac != 2){
