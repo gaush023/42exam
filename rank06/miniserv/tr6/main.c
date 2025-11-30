@@ -92,40 +92,32 @@ void remove_client(int fd){
 }
 
 void send_pending_msg(int fd){
-    char *msg = NULL;
-    int r;
-
-    while (1) {
-        r = extract_message(&msgs[fd], &msg);
-
-        if (r == -1) {
-            if (msgs[fd]) {
-                free(msgs[fd]);
-                msgs[fd] = NULL;
-            }
-            remove_client(fd);
-            return; 
-        }
-
-        if (r == 0) {
-            return;
-        }
-
-        sprintf(bufw, "client %d: %s", ids[fd], msg);
-        notify_all(fd, bufw);
-        free(msg);
+  char *msg = NULL;
+  int r;
+  while(1){
+    r = extract_message(&msgs[fd], &msg);
+    if(r == -1){
+      if(msg[fd])
+        free(msgs[fd]);
+      remove_client(fd);
+      return;
     }
+    if(r == 0)
+      return;
+    sprintf(bufw, "client %d: %s", ids[fd], msg);
+    notify_all(fd, msg);
+    free(msg);
+  }
 }
-int main(int ac, char **av) {
 
+int main(int ac, char **av) {
   if(ac != 2){
-    write(2, "Wrong number of arguments\n", strlen("Wrong number of arguments"));
     exit(1);
   }
-  
+
   FD_ZERO(&afds);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
-	if (sockfd < 0)
+	if (sockfd == -1)
     fatal_error();
   FD_SET(sockfd, &afds);
   int opt = 1;
@@ -135,14 +127,14 @@ int main(int ac, char **av) {
 	struct sockaddr_in servaddr; 
 	memset(&servaddr, 0, sizeof(servaddr)); 
 	servaddr.sin_family = AF_INET; 
-	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1j
+	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
 	servaddr.sin_port = htons(atoi(av[1])); 
   
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) < 0)
     fatal_error();
-	if (listen(sockfd, SOMAXCONN) != 0)
+	if (listen(sockfd, SOMAXCONN) < 0)
     fatal_error();
-  while(1){
+	while(1){
     rfds = afds;
     wfds = afds;
     if(select(max_fd + 1, &rfds, &wfds, NULL, NULL) < 0)
@@ -151,13 +143,13 @@ int main(int ac, char **av) {
       if(FD_ISSET(fd, &rfds) && fd == sockfd){
         struct sockaddr_in clientAddr;
         socklen_t addrlen = sizeof(clientAddr);
-        int clientfd = accept(sockfd, (struct sockaddr *)&clientAddr, &addrlen);
+        int clientfd = accept(sockfd, (struct sockaddr *)&clientAddr, &addrlen); 
         if(clientfd >= 0)
           client_add(clientfd);
         continue;
       }
       if(FD_ISSET(fd, &rfds) && fd != sockfd){
-        int bytes = recv(fd, bufr, sizeof(bufr) -1, 0);
+        int bytes = recv(fd, bufr, sizeof(bufr) - 1, 0);
         if(bytes <= 0){
           remove_client(fd);
           continue;
